@@ -205,8 +205,8 @@ create policy "Allow browser access tasks"
   on public.tasks for all to anon using (true) with check (true);
 
 -- ─── OPTIONAL: enable daily cron to catch any tasks missed by the trigger ─────
--- Enable pg_cron in Dashboard → Database → Extensions, then run:
---   select cron.schedule('mark-overdue-tasks', '0 0 * * *',
---     $$update public.tasks set status = 'Overdue'
---       where "dueDate" < current_date
---         and status not in ('Completed', 'Overdue')$$);
+Enable pg_cron in Dashboard → Database → Extensions, then run:
+select cron.schedule('mark-overdue-tasks', '0 0 * * *',
+$$update public.tasks set status = 'Overdue'
+where "dueDate" < current_date
+and status not in ('Completed', 'Overdue')$$);
