@@ -316,6 +316,7 @@ function App() {
   const [teamViewMode, setTeamViewMode] = useState("grid");
   const [filterStage, setFilterStage] = useState("All");
   const [taskFilter, setTaskFilter] = useState("All");
+  const [taskProjectFilter, setTaskProjectFilter] = useState("All");
   const [saving, setSaving] = useState(false);
   const [lastSaved, setLastSaved] = useState("");
   const [confirmDelete, setConfirmDelete] = useState(null);
@@ -367,7 +368,7 @@ function App() {
   const jdaCount = projects.filter(p => p.jda).length;
   const creditCount = projects.filter(p => p.credit).length;
   const filteredProjects = filterStage === "All" ? projects : projects.filter(p => p.stage === filterStage);
-  const filteredTasks = taskFilter === "All" ? tasks : tasks.filter(t => t.status === taskFilter);
+  const filteredTasks = tasks.filter(t => (taskFilter === "All" || t.status === taskFilter) && (taskProjectFilter === "All" || t.project === taskProjectFilter));
   const openIssues = issues.filter(i => i.status !== "Resolved").length;
 
   const saveProject = () => { if (!pForm.name.trim()) return alert("Project name is required"); const duration = countWorkingDays(pForm.startDate, pForm.actualCompletion || today()); const projectToSave = { ...pForm, duration }; projectModal === "add" ? setProjects(ps => [...ps, { ...projectToSave, id: Date.now() }]) : setProjects(ps => ps.map(p => p.id === projectModal ? { ...projectToSave } : p)); flash(); setProjectModal(null); };
@@ -667,7 +668,13 @@ function App() {
         {tab === "activities" && (<>
           <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:14}}>
             <SectionHeader label="ACTIVITIES"/>
-            <button onClick={()=>{setTForm(blankTask());setTaskModal("add");}} style={{background:"#3b6cb7",color:"#fff",border:"none",borderRadius:8,padding:"8px 18px",cursor:"pointer",fontWeight:700,fontSize:12}}>+ Add Task</button>
+            <div style={{display:"flex",gap:8,alignItems:"center"}}>
+              <select value={taskProjectFilter} onChange={e=>setTaskProjectFilter(e.target.value)} style={{...INPUT,width:220,fontSize:12}}>
+                <option value="All">All Projects</option>
+                {projects.map(p=><option key={p.id} value={p.name}>{p.name}</option>)}
+              </select>
+              <button onClick={()=>{setTForm(blankTask());setTaskModal("add");}} style={{background:"#3b6cb7",color:"#fff",border:"none",borderRadius:8,padding:"8px 18px",cursor:"pointer",fontWeight:700,fontSize:12}}>+ Add Task</button>
+            </div>
           </div>
           <div style={{display:"grid",gridTemplateColumns:"repeat(5,1fr)",gap:12,marginBottom:22}}>
             {[["All",tasks.length,"#1a2a4a"],["Pending",tasks.filter(t=>t.status==="Pending").length,"#6b7280"],["In Progress",tasks.filter(t=>t.status==="In Progress").length,"#3b6cb7"],["Completed",tasks.filter(t=>t.status==="Completed").length,"#3a9e5f"],["Overdue",tasks.filter(t=>t.status==="Overdue").length,"#dc2626"]].map(([label,count,color])=>(
