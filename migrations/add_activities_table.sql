@@ -1,19 +1,29 @@
--- Run this in Supabase Dashboard › SQL Editor to add the activities table
--- without resetting the rest of the database.
+-- Run this in Supabase Dashboard › SQL Editor.
+-- The activities table already exists; this patches it to work with the app.
 
-create table if not exists public.activities (
-  id               bigint  primary key generated always as identity,
-  activityname     text    not null,
-  projectstage     text,
-  activitycategory text,
-  updated_at       timestamptz not null default now()
-);
+-- Drop the auto-identity so the app can insert rows with explicit bigint IDs.
+alter table public.activities alter column id drop identity if exists;
 
-create trigger set_activities_updated_at
-  before update on public.activities
-  for each row execute function public.set_updated_at();
+-- Add trigger if not already present.
+do $$ begin
+  if not exists (
+    select 1 from pg_trigger where tgname = 'set_activities_updated_at'
+  ) then
+    create trigger set_activities_updated_at
+      before update on public.activities
+      for each row execute function public.set_updated_at();
+  end if;
+end $$;
 
+-- Enable RLS and anon policy (safe to re-run).
 alter table public.activities enable row level security;
 
-create policy "Allow browser access activities"
-  on public.activities for all to anon using (true) with check (true);
+do $$ begin
+  if not exists (
+    select 1 from pg_policies
+    where tablename = 'activities' and policyname = 'Allow browser access activities'
+  ) then
+    create policy "Allow browser access activities"
+      on public.activities for all to anon using (true) with check (true);
+  end if;
+end $$;

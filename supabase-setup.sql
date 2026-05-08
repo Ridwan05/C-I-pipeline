@@ -94,7 +94,7 @@ create table public.tasks (
 );
 
 create table public.activities (
-  id               bigint  primary key generated always as identity,
+  id               bigint  primary key,
   activityname     text    not null,
   projectstage     text,
   activitycategory text,
