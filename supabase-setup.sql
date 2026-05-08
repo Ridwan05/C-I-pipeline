@@ -7,6 +7,7 @@ drop table if exists public.deployment_sites cascade;
 drop table if exists public.issues          cascade;
 drop table if exists public.team_members    cascade;
 drop table if exists public.projects        cascade;
+drop table if exists public.activities      cascade;
 
 -- ─── TABLES ──────────────────────────────────────────────────────────────────
 
@@ -92,6 +93,14 @@ create table public.tasks (
   updated_at   timestamptz not null default now()
 );
 
+create table public.activities (
+  id               bigint  primary key generated always as identity,
+  activityname     text    not null,
+  projectstage     text,
+  activitycategory text,
+  updated_at       timestamptz not null default now()
+);
+
 -- ─── FUNCTIONS & TRIGGERS ────────────────────────────────────────────────────
 
 -- Stamp updated_at on every row update
@@ -121,6 +130,10 @@ create trigger set_deployment_sites_updated_at
 
 create trigger set_tasks_updated_at
   before update on public.tasks
+  for each row execute function public.set_updated_at();
+
+create trigger set_activities_updated_at
+  before update on public.activities
   for each row execute function public.set_updated_at();
 
 -- Auto-mark tasks as Overdue when dueDate has passed and task is not Completed
@@ -188,6 +201,7 @@ alter table public.team_members      enable row level security;
 alter table public.issues            enable row level security;
 alter table public.deployment_sites  enable row level security;
 alter table public.tasks             enable row level security;
+alter table public.activities        enable row level security;
 
 create policy "Allow browser access projects"
   on public.projects for all to anon using (true) with check (true);
@@ -203,6 +217,9 @@ create policy "Allow browser access deployment_sites"
 
 create policy "Allow browser access tasks"
   on public.tasks for all to anon using (true) with check (true);
+
+create policy "Allow browser access activities"
+  on public.activities for all to anon using (true) with check (true);
 
 -- ─── OPTIONAL: enable daily cron to catch any tasks missed by the trigger ─────
 Enable pg_cron in Dashboard → Database → Extensions, then run:
