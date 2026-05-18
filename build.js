@@ -7,13 +7,9 @@ await cp("public", "dist", { recursive: true });
 const supabaseUrl = process.env.SUPABASE_URL || "";
 const supabaseAnonKey = process.env.SUPABASE_ANON_KEY || "";
 
-if (process.env.VERCEL && (!supabaseUrl || !supabaseAnonKey)) {
-  throw new Error("Missing SUPABASE_URL or SUPABASE_ANON_KEY environment variable.");
-}
-
 await writeFile(
   "dist/config.js",
-  `window.MESHGRID_CONFIG = ${JSON.stringify(
+  `window.CI_CONFIG = ${JSON.stringify(
     {
       SUPABASE_URL: supabaseUrl,
       SUPABASE_ANON_KEY: supabaseAnonKey,

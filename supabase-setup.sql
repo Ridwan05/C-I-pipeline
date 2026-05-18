@@ -1,17 +1,17 @@
--- MeshGrid Pipeline Manager — Supabase schema
+-- C&I Pipeline Manager — Supabase schema
 -- Run in Supabase Dashboard › SQL Editor to replicate the database.
 -- Safe to re-run: drops existing tables before recreating.
 
-drop table if exists public.tasks           cascade;
-drop table if exists public.deployment_sites cascade;
-drop table if exists public.issues          cascade;
-drop table if exists public.team_members    cascade;
-drop table if exists public.projects        cascade;
-drop table if exists public.activities      cascade;
+drop table if exists public.tasks_ci            cascade;
+drop table if exists public.deployment_sites_ci cascade;
+drop table if exists public.issues_ci           cascade;
+drop table if exists public.team_members_ci     cascade;
+drop table if exists public.projects_ci         cascade;
+drop table if exists public.activities_ci       cascade;
 
 -- ─── TABLES ──────────────────────────────────────────────────────────────────
 
-create table public.projects (
+create table public.projects_ci (
   id                 bigint  primary key,
   name               text    not null,
   developer          text,
@@ -41,7 +41,7 @@ create table public.projects (
   jdacost            smallint
 );
 
-create table public.team_members (
+create table public.team_members_ci (
   id             bigint  primary key,
   name           text    not null,
   role           text,
@@ -52,7 +52,7 @@ create table public.team_members (
   completedtasks integer default 0
 );
 
-create table public.issues (
+create table public.issues_ci (
   id         bigint primary key,
   project    text,
   owner      text,
@@ -61,7 +61,7 @@ create table public.issues (
   updated_at timestamptz not null default now()
 );
 
-create table public.deployment_sites (
+create table public.deployment_sites_ci (
   id          bigint primary key,
   sitename    text   not null,
   project     text,
@@ -72,7 +72,7 @@ create table public.deployment_sites (
   "PV"        numeric default 0
 );
 
-create table public.tasks (
+create table public.tasks_ci (
   id           bigint primary key,
   activityname text   not null,
   project      text,
@@ -93,7 +93,7 @@ create table public.tasks (
   updated_at   timestamptz not null default now()
 );
 
-create table public.activities (
+create table public.activities_ci (
   id               bigint  primary key,
   activityname     text    not null,
   projectstage     text,
@@ -112,28 +112,28 @@ begin
 end;
 $$;
 
-create trigger set_projects_updated_at
-  before update on public.projects
+create trigger set_projects_ci_updated_at
+  before update on public.projects_ci
   for each row execute function public.set_updated_at();
 
-create trigger set_team_members_updated_at
-  before update on public.team_members
+create trigger set_team_members_ci_updated_at
+  before update on public.team_members_ci
   for each row execute function public.set_updated_at();
 
-create trigger set_issues_updated_at
-  before update on public.issues
+create trigger set_issues_ci_updated_at
+  before update on public.issues_ci
   for each row execute function public.set_updated_at();
 
-create trigger set_deployment_sites_updated_at
-  before update on public.deployment_sites
+create trigger set_deployment_sites_ci_updated_at
+  before update on public.deployment_sites_ci
   for each row execute function public.set_updated_at();
 
-create trigger set_tasks_updated_at
-  before update on public.tasks
+create trigger set_tasks_ci_updated_at
+  before update on public.tasks_ci
   for each row execute function public.set_updated_at();
 
-create trigger set_activities_updated_at
-  before update on public.activities
+create trigger set_activities_ci_updated_at
+  before update on public.activities_ci
   for each row execute function public.set_updated_at();
 
 -- Auto-mark tasks as Overdue when dueDate has passed and task is not Completed
@@ -149,12 +149,12 @@ begin
 end;
 $$;
 
-create trigger tasks_auto_overdue
-  before insert or update on public.tasks
+create trigger tasks_ci_auto_overdue
+  before insert or update on public.tasks_ci
   for each row execute function public.set_task_overdue();
 
--- Keep tasksDue / pendingtasks / completedtasks on team_members in sync
--- with the tasks table on every insert, update, or delete
+-- Keep tasksDue / pendingtasks / completedtasks on team_members_ci in sync
+-- with the tasks_ci table on every insert, update, or delete
 create or replace function public.sync_member_task_counts()
 returns trigger language plpgsql as $$
 declare
@@ -171,18 +171,18 @@ begin
   end if;
 
   if old_name is not null and (tg_op = 'DELETE' or old_name is distinct from new_name) then
-    update public.team_members set
-      "tasksDue"     = (select count(*) from public.tasks where "assignedTo" = old_name and status = 'Overdue'),
-      pendingtasks   = (select count(*) from public.tasks where "assignedTo" = old_name and status = 'Pending'),
-      completedtasks = (select count(*) from public.tasks where "assignedTo" = old_name and status = 'Completed')
+    update public.team_members_ci set
+      "tasksDue"     = (select count(*) from public.tasks_ci where "assignedTo" = old_name and status = 'Overdue'),
+      pendingtasks   = (select count(*) from public.tasks_ci where "assignedTo" = old_name and status = 'Pending'),
+      completedtasks = (select count(*) from public.tasks_ci where "assignedTo" = old_name and status = 'Completed')
     where name = old_name;
   end if;
 
   if new_name is not null then
-    update public.team_members set
-      "tasksDue"     = (select count(*) from public.tasks where "assignedTo" = new_name and status = 'Overdue'),
-      pendingtasks   = (select count(*) from public.tasks where "assignedTo" = new_name and status = 'Pending'),
-      completedtasks = (select count(*) from public.tasks where "assignedTo" = new_name and status = 'Completed')
+    update public.team_members_ci set
+      "tasksDue"     = (select count(*) from public.tasks_ci where "assignedTo" = new_name and status = 'Overdue'),
+      pendingtasks   = (select count(*) from public.tasks_ci where "assignedTo" = new_name and status = 'Pending'),
+      completedtasks = (select count(*) from public.tasks_ci where "assignedTo" = new_name and status = 'Completed')
     where name = new_name;
   end if;
 
@@ -190,40 +190,40 @@ begin
 end;
 $$;
 
-create trigger tasks_sync_member_counts
-  after insert or update or delete on public.tasks
+create trigger tasks_ci_sync_member_counts
+  after insert or update or delete on public.tasks_ci
   for each row execute function public.sync_member_task_counts();
 
 -- ─── ROW LEVEL SECURITY ───────────────────────────────────────────────────────
 
-alter table public.projects          enable row level security;
-alter table public.team_members      enable row level security;
-alter table public.issues            enable row level security;
-alter table public.deployment_sites  enable row level security;
-alter table public.tasks             enable row level security;
-alter table public.activities        enable row level security;
+alter table public.projects_ci          enable row level security;
+alter table public.team_members_ci      enable row level security;
+alter table public.issues_ci            enable row level security;
+alter table public.deployment_sites_ci  enable row level security;
+alter table public.tasks_ci             enable row level security;
+alter table public.activities_ci        enable row level security;
 
-create policy "Allow browser access projects"
-  on public.projects for all to anon using (true) with check (true);
+create policy "Allow browser access projects_ci"
+  on public.projects_ci for all to anon using (true) with check (true);
 
-create policy "Allow browser access team_members"
-  on public.team_members for all to anon using (true) with check (true);
+create policy "Allow browser access team_members_ci"
+  on public.team_members_ci for all to anon using (true) with check (true);
 
-create policy "Allow browser access issues"
-  on public.issues for all to anon using (true) with check (true);
+create policy "Allow browser access issues_ci"
+  on public.issues_ci for all to anon using (true) with check (true);
 
-create policy "Allow browser access deployment_sites"
-  on public.deployment_sites for all to anon using (true) with check (true);
+create policy "Allow browser access deployment_sites_ci"
+  on public.deployment_sites_ci for all to anon using (true) with check (true);
 
-create policy "Allow browser access tasks"
-  on public.tasks for all to anon using (true) with check (true);
+create policy "Allow browser access tasks_ci"
+  on public.tasks_ci for all to anon using (true) with check (true);
 
-create policy "Allow browser access activities"
-  on public.activities for all to anon using (true) with check (true);
+create policy "Allow browser access activities_ci"
+  on public.activities_ci for all to anon using (true) with check (true);
 
 -- ─── OPTIONAL: enable daily cron to catch any tasks missed by the trigger ─────
 Enable pg_cron in Dashboard → Database → Extensions, then run:
 select cron.schedule('mark-overdue-tasks', '0 0 * * *',
-$$update public.tasks set status = 'Overdue'
+$$update public.tasks_ci set status = 'Overdue'
 where "dueDate" < current_date
 and status not in ('Completed', 'Overdue')$$);

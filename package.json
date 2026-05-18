@@ -1,13 +1,12 @@
 {
-  "name": "meshgrid-pipeline",
+  "name": "ci-pipeline",
   "version": "1.0.0",
   "private": true,
   "type": "module",
   "scripts": {
     "build": "node build.js",
     "dev": "powershell -ExecutionPolicy Bypass -File ./start.ps1",
-    "start": "powershell -ExecutionPolicy Bypass -File ./start.ps1",
-    "vercel-build": "node build.js"
+    "start": "powershell -ExecutionPolicy Bypass -File ./start.ps1"
   },
   "devDependencies": {
     "supabase": "^2.98.1"
