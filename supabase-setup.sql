@@ -37,7 +37,7 @@ create table public.projects_ci (
   "evidenceCompliance" integer default 100,
   "pvCapacity"       numeric default 0,
   duration           integer default 0,
-  jdacost            smallint
+  jdacost            numeric default 0
 );
 
 create table public.team_members_ci (
