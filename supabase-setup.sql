@@ -21,7 +21,6 @@ create table public.projects_ci (
   rag                text,
   size               numeric,
   updated_at         timestamptz not null default now(),
-  connections        smallint,
   loi                boolean default false,
   jda                boolean default false,
   credit             boolean default false,
@@ -68,7 +67,6 @@ create table public.deployment_sites_ci (
   updated_at  timestamptz not null default now(),
   state       text,
   "LGA"       text,
-  connections integer default 0,
   "PV"        numeric default 0
 );
 
